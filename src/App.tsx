@@ -1,12 +1,16 @@
 // import { useState } from "react";
 // import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import Sidebar from './components/Sidebar';
+import TopNavbar from './components/TopNavbar';
 
 function App() {
   return (
-    <main>
-      <h1>Portfolio Generator</h1>
-    </main>
+    <>
+      <TopNavbar />
+      <main className="bg-bgblack">
+        <Sidebar />
+      </main>
+    </>
   );
 }
 
