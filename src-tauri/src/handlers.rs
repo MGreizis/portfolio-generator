@@ -3,6 +3,8 @@ use crate::AppState;
 use actix_web::{web, HttpResponse, Responder};
 // use std::collections::HashMap;
 // use std::sync::Mutex;
+use std::env;
+use tera::Context;
 
 /// Returns the current user data as JSON if it exists, or a 404 response if not.
 pub async fn get_user(data: web::Data<super::AppState>) -> impl Responder {
@@ -72,5 +74,35 @@ pub async fn delete_project(
         HttpResponse::Ok().body(format!("Project with id {} deleted", id))
     } else {
         HttpResponse::NotFound().body("Project not found")
+    }
+}
+
+/// Renders a portfolio HTML page using the current user data and a list of all projects as context variables.
+///
+/// The rendered HTML is returned as a 200 response with a `text/html` content type.
+/// If the user data does not exist, a 404 response with a "User not found" message is returned.
+/// If rendering the template fails, a 500 response with a "Failed to render template" message is returned.
+pub async fn render_portfolio(data: web::Data<AppState>) -> impl Responder {
+    let user_data = data.user.lock().unwrap();
+    let user = match &*user_data {
+        Some(user) => user.clone(),
+        None => return HttpResponse::NotFound().body("User not found"),
+    };
+
+    let projects_data = data.projects.lock().unwrap();
+    let projects: Vec<Project> = projects_data.values().cloned().collect();
+
+    let mut context = Context::new();
+    context.insert("user", &user);
+    context.insert("projects", &projects);
+
+    let rendered = data.tera.render("portfolio.html", &context);
+    match rendered {
+        Ok(html) => HttpResponse::Ok().content_type("text/html").body(html),
+        Err(e) => {
+            eprintln!("Failed to render template: {}", e);
+            println!("Current directory: {:?}", std::env::current_dir());
+            HttpResponse::InternalServerError().body("Failed to render template")
+        }
     }
 }

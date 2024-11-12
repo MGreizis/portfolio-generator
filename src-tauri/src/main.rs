@@ -1,9 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use actix_files as fs;
 use actix_web::{web, App, HttpServer};
 use std::collections::HashMap;
 use std::sync::Mutex;
+use tera::Tera;
 
 mod handlers;
 mod models;
@@ -13,6 +15,7 @@ use models::User;
 struct AppState {
     user: Mutex<Option<User>>,
     projects: Mutex<HashMap<u32, models::Project>>,
+    tera: Tera,
 }
 
 /// Starts the Tauri app HTTP server.
@@ -29,14 +32,19 @@ struct AppState {
 /// The server is shutdown when the Tauri app is closed.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let tera = Tera::new("templates/*.html").expect("Failed to initialize Tera templates");
+
     // Creates a single instance of the shared data to be used across all routes.
     let shared_data = web::Data::new(AppState {
         user: Mutex::new(None),
         projects: Mutex::new(HashMap::new()),
+        tera,
     });
 
     HttpServer::new(move || {
         App::new()
+            // TODO: Fix tailwind
+            .service(fs::Files::new("/render", "/static").show_files_listing())
             .app_data(shared_data.clone())
             .route("/user", web::get().to(handlers::get_user))
             .route("/user", web::post().to(handlers::update_user))
@@ -47,6 +55,7 @@ async fn main() -> std::io::Result<()> {
                 web::get().to(handlers::get_single_project),
             )
             .route("/projects/{id}", web::delete().to(handlers::delete_project))
+            .route("/render", web::get().to(handlers::render_portfolio))
     })
     .bind("127.0.0.1:8080")?
     .run()
