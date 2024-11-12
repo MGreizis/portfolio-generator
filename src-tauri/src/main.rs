@@ -2,7 +2,18 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use actix_web::{web, App, HttpServer};
+use std::collections::HashMap;
+use std::sync::Mutex;
+
 mod handlers;
+mod models;
+
+use models::User;
+
+struct AppState {
+    user: Mutex<Option<User>>,
+    projects: Mutex<HashMap<u32, models::Project>>,
+}
 
 /// Starts the Tauri app HTTP server.
 ///
@@ -18,8 +29,15 @@ mod handlers;
 /// The server is shutdown when the Tauri app is closed.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    // Creates a single instance of the shared data to be used across all routes.
+    let shared_data = web::Data::new(AppState {
+        user: Mutex::new(None),
+        projects: Mutex::new(HashMap::new()),
+    });
+
+    HttpServer::new(move || {
         App::new()
+            .app_data(shared_data.clone())
             .route("/user", web::get().to(handlers::get_user))
             .route("/user", web::post().to(handlers::update_user))
             .route("/projects", web::post().to(handlers::add_project))
