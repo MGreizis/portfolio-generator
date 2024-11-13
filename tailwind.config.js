@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./src/**/*.{js,ts,jsx,tsx}', './src-tauri/templates/*.html'],
+  content: ['./src/**/*.{js,ts,jsx,tsx}', './src-tauri/templates/**/*.html'],
   theme: {
     extend: {
       colors: {
