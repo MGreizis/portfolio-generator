@@ -18,18 +18,16 @@ struct AppState {
     tera: Tera,
 }
 
-/// Starts the Tauri app HTTP server.
+/// Starts an Actix web server that handles the following routes:
 ///
-/// The server listens on `127.0.0.1:8080` and responds to the following routes:
+/// - **GET /user**: Returns the current user data as a JSON object if it exists, or a 404 response if not.
+/// - **POST /user**: Updates the current user data with the provided JSON object.
+/// - **POST /projects**: Adds a new project to the list of all projects, keyed by the project's ID, and returns a 200 response with a message indicating the ID of the new project.
+/// - **GET /projects**: Returns a list of all projects as a JSON array.
+/// - **GET /projects/{id}**: Returns a single project with the given ID as a JSON object if it exists, or a 404 response if not.
+/// - **DELETE /projects/{id}**: Removes a single project with the given ID if it exists, or returns a 404 response if not.
+/// - **GET /render**: Renders a portfolio HTML page using the current user data and a list of all projects as context variables.
 ///
-/// - `GET /user`: Returns the current user data.
-/// - `POST /user`: Updates the current user data.
-/// - `POST /projects`: Creates a new project.
-/// - `GET /projects`: Returns a list of all projects.
-/// - `GET /projects/{id}`: Returns the project with the given `id`.
-/// - `DELETE /projects/{id}`: Deletes the project with the given `id`.
-///
-/// The server is shutdown when the Tauri app is closed.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let tera = Tera::new("templates/*.html").expect("Failed to initialize Tera templates");
