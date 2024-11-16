@@ -41,7 +41,6 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            // TODO: Fix TW
             .service(fs::Files::new("/static", "./static").show_files_listing())
             .app_data(shared_data.clone())
             .route("/user", web::get().to(handlers::get_user))
